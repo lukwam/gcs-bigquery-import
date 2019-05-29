@@ -17,7 +17,7 @@ def bigqueryImport(data, context):
     timeCreated = data['timeCreated']
 
     # check filename format - dataset_name/table_name.json
-    if not re.search('^[a-z_]+/[a-z_]+.json$', filename):
+    if not re.search('^[a-zA-Z_-]+/[a-zA-Z_-]+.json$', filename):
         logging.error('Unrecognized filename format: %s' % (filename))
         return
 
