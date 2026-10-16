@@ -1,1 +1,7 @@
-*.sh
+.git/
+.github/
+.venv/
+tests/
+terraform/
+examples/
+*.md

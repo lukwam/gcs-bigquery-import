@@ -1,0 +1,7 @@
+[
+  {"name": "id", "type": "INTEGER", "mode": "REQUIRED"},
+  {"name": "name", "type": "STRING"},
+  {"name": "species", "type": "STRING"},
+  {"name": "born", "type": "DATE"},
+  {"name": "tags", "type": "STRING", "mode": "REPEATED"}
+]
