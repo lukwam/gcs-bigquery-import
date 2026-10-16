@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+
+permissions:
+  contents: write  # publish the coverage badge from master
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version-file: .python-version
+      - uses: hashicorp/setup-terraform@v3
+      - run: pip install -r requirements-dev.txt
+      - run: pre-commit run --all-files --show-diff-on-failure
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The Cloud Run functions runtimes this supports.
+        python-version: ["3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -r requirements-dev.txt
+      - run: pytest --cov=main --cov-report=term-missing --cov-report=json --cov-fail-under=90
+      - name: Publish the coverage badge
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master' && matrix.python-version == '3.13'
+        run: |
+          python -c "
+          import json
+          percent = json.load(open('coverage.json'))['totals']['percent_covered']
+          color = 'brightgreen' if percent >= 90 else 'green' if percent >= 80 else 'yellow' if percent >= 70 else 'red'
+          json.dump({'schemaVersion': 1, 'label': 'coverage', 'message': f'{percent:.0f}%', 'color': color}, open('coverage-badge.json', 'w'))
+          "
+          scripts/publish_badges.sh coverage-badge.json
+
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform
+    steps:
+      - uses: actions/checkout@v7
+      - uses: hashicorp/setup-terraform@v3
+      - run: terraform init -backend=false
+      - run: terraform validate
